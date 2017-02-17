@@ -29,6 +29,8 @@ object InMemoryRoomService : RoomService {
     private val members = ConcurrentHashMap<Room, MutableSet<User>>()
 
     override fun join(user: User, room: Room) {
+        // if the `room` isn't exist in the members, create a user list and add to the map, and then add `user` the the
+        // map.
         members.getOrPut(room, { CopyOnWriteArraySet<User>() }).add(user)
     }
 
@@ -37,6 +39,7 @@ object InMemoryRoomService : RoomService {
     }
 
     override fun create(user: User, name: String): Room {
+        // whether the user has already created a room.
         if (exists(name)) throw RoomAlreadyExistsException(name)
 
         val room = Room(name)

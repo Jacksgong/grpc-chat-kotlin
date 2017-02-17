@@ -6,6 +6,8 @@ import io.grpc.stub.StreamObserver
 import org.slf4j.LoggerFactory
 
 fun main(args: Array<String>) {
+    // the entrance.
+
     Server.start()
 }
 
@@ -14,9 +16,13 @@ object Server {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     fun start() {
+        // the token generator
         val tokenGenerator = TokenGeneratorImpl
+        // create service, all data is just stored in the memory.
         val userService = InMemoryUserService(tokenGenerator)
         val roomService = InMemoryRoomService
+
+
         val chat = Chat(userService, roomService)
 
         val server = ServerBuilder.forPort(PORT).addService(chat).build().start()
@@ -28,25 +34,38 @@ object Server {
     }
 }
 
+/**
+ * The real operation for the ChatGrpc.
+ */
 class Chat(
+        // the user account service.
         private val userService: UserService,
+        // the room service.
         private val roomService: RoomService
+
+// just implement the operation of ChatGrpc which generate through protocol buffer and is handled by gRPC system.
 ) : ChatGrpc.ChatImplBase() {
+    // the logger just used for debugging.
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private fun error(code: Int, message: String): Error {
+    /**
+     * build an error response.
+     */
+    private fun buildError(code: Int, message: String): Error {
         return Error.newBuilder().setCode(code).setMessage(message).build()
     }
 
     override fun login(request: LoginRequest, responseObserver: StreamObserver<LoginResponse>) {
         val token = userService.login(request.username, request.password)
         val response = if (token != null) {
+            // login successfully
             logger.info("User {} logged in. Access token is {}", request.username, token)
             LoginResponse.newBuilder().setLoggedIn(true).setToken(token.data).build()
         } else {
-            LoginResponse.newBuilder().setLoggedIn(false).setError(error(LoginCodes.INVALID_CREDENTIALS, "Invalid credentials")).build()
+            LoginResponse.newBuilder().setLoggedIn(false).setError(buildError(LoginCodes.INVALID_CREDENTIALS, "Invalid credentials")).build()
         }
 
+        // post the response.
         responseObserver.onNext(response)
         responseObserver.onCompleted()
     }
@@ -55,44 +74,54 @@ class Chat(
         val response = try {
             val user = userService.register(request.username, request.password)
             logger.info("User {} registered", user.username)
+
+            // build the successfully register code.
             RegisterResponse.newBuilder().setRegistered(true).build()
         } catch (ex: UserAlreadyExistsException) {
-            RegisterResponse.newBuilder().setRegistered(false).setError(error(RegisterCodes.USERNAME_ALREADY_EXISTS, "Username already exists")).build()
+            RegisterResponse.newBuilder().setRegistered(false).setError(buildError(RegisterCodes.USERNAME_ALREADY_EXISTS, "Username already exists")).build()
         }
 
+        // post the response.
         responseObserver.onNext(response)
         responseObserver.onCompleted()
     }
 
     override fun createRoom(request: CreateRoomRequest, responseObserver: StreamObserver<CreateRoomResponse>) {
+        // whether the user request create room is valid.
         val user = userService.validateToken(Token(request.token))
 
         val response = if (user == null) {
-            CreateRoomResponse.newBuilder().setError(error(Codes.INVALID_TOKEN, "Invalid token")).setCreated(false).build()
+            // if user is invalid, create error response.
+            CreateRoomResponse.newBuilder().setError(buildError(Codes.INVALID_TOKEN, "Invalid token")).setCreated(false).build()
         } else {
             try {
-                val room = roomService.create(user, request.name)
+                // if user is valid, create room, and put the room to the room service.
+                roomService.create(user, request.name)
+                // create the response for successfully creating the room.
                 CreateRoomResponse.newBuilder().setCreated(true).build()
             } catch(ex: RoomAlreadyExistsException) {
-                CreateRoomResponse.newBuilder().setCreated(false).setError(error(CreateRoomCodes.ROOM_ALREADY_EXISTS, "Room already exists")).build()
+                // create the response for occurring error when creating the room.
+                CreateRoomResponse.newBuilder().setCreated(false).setError(buildError(CreateRoomCodes.ROOM_ALREADY_EXISTS, "Room already exists")).build()
             }
         }
 
+        // post the response.
         responseObserver.onNext(response)
         responseObserver.onCompleted()
     }
 
     override fun listRooms(request: ListRoomsRequest, responseObserver: StreamObserver<ListRoomsResponse>) {
+        // whether the user request list all rooms is valid.
         val user = userService.validateToken(Token(request.token))
 
         val response = if (user == null) {
-            ListRoomsResponse.newBuilder().setError(error(Codes.INVALID_TOKEN, "Invalid token")).build()
+            ListRoomsResponse.newBuilder().setError(buildError(Codes.INVALID_TOKEN, "Invalid token")).build()
         } else {
             val rooms = roomService.all()
             ListRoomsResponse.newBuilder().addAllRooms(rooms.map(Room::name)).build()
-
         }
 
+        // post the response.
         responseObserver.onNext(response)
         responseObserver.onCompleted()
     }
