@@ -55,6 +55,33 @@ class Chat(
         return Error.newBuilder().setCode(code).setMessage(message).build()
     }
 
+    override fun loginOrRegister(request: LoginRequest, responseObserver: StreamObserver<LoginOrRegisterResponse>) {
+        val exist = userService.exists(request.username)
+
+        val responseBuilder = LoginOrRegisterResponse.newBuilder()
+        if (!exist) {
+            logger.info("${request.username} isn't exist, so register for it first")
+            val user = userService.register(request.username, request.password)
+            logger.info("User {} registered", user.username)
+            responseBuilder.performedRegister = true
+        } else {
+            responseBuilder.performedRegister = false
+        }
+
+        val token = userService.login(request.username, request.password)
+
+        val response = if (token != null) {
+            logger.info("User {} logged in. Access token is {}", request.username, token)
+            responseBuilder.setLoggedIn(true).setToken(token.data).build()
+        } else {
+            responseBuilder.setLoggedIn(false).setError(buildError(LoginCodes.INVALID_CREDENTIALS, "Invalid credentials")).build()
+        }
+
+        // post the response.
+        responseObserver.onNext(response)
+        responseObserver.onCompleted()
+    }
+
     override fun login(request: LoginRequest, responseObserver: StreamObserver<LoginResponse>) {
         val token = userService.login(request.username, request.password)
         val response = if (token != null) {
