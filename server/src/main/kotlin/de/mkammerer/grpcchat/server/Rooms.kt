@@ -3,7 +3,7 @@ package de.mkammerer.grpcchat.server
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
-data class Room(val name: String)
+data class Room(val name: String, val desc: String?)
 
 class RoomAlreadyExistsException(name: String) : Exception("Room '$name' already exist")
 class RoomNotFoundException(name: String) : Exception("Room '$name' not found")
@@ -42,7 +42,7 @@ object InMemoryRoomService : RoomService {
         // whether the user has already created a room.
         if (exists(name)) throw RoomAlreadyExistsException(name)
 
-        val room = Room(name)
+        val room = Room(name, null)
         rooms.put(room.name, room)
 
         join(user, room)

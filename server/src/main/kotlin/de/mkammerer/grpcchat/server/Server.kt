@@ -118,6 +118,7 @@ class Chat(
         val user = userService.validateToken(Token(request.token))
 
         val response = if (user == null) {
+            logger.info("create room invalid token")
             // if user is invalid, create error response.
             CreateRoomResponse.newBuilder().setError(buildError(Codes.INVALID_TOKEN, "Invalid token")).setCreated(false).build()
         } else {
@@ -125,6 +126,7 @@ class Chat(
                 // if user is valid, create room, and put the room to the room service.
                 roomService.create(user, request.name)
                 // create the response for successfully creating the room.
+                logger.info("create room successfully")
                 CreateRoomResponse.newBuilder().setCreated(true).build()
             } catch(ex: RoomAlreadyExistsException) {
                 // create the response for occurring error when creating the room.
@@ -142,10 +144,14 @@ class Chat(
         val user = userService.validateToken(Token(request.token))
 
         val response = if (user == null) {
+            logger.info("list rooms invalid token")
             ListRoomsResponse.newBuilder().setError(buildError(Codes.INVALID_TOKEN, "Invalid token")).build()
         } else {
             val rooms = roomService.all()
-            ListRoomsResponse.newBuilder().addAllRooms(rooms.map(Room::name)).build()
+            logger.info("list rooms: ${rooms.size}")
+            val roomMessageList = mutableListOf<RoomMessage>()
+            rooms.forEach { roomMessageList.add(RoomMessage.newBuilder().setTitle(it.name).setDesc(it.desc).build()) }
+            ListRoomsResponse.newBuilder().addAllRooms(roomMessageList).build()
         }
 
         // post the response.

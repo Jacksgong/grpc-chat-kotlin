@@ -68,5 +68,10 @@ message ListRoomsRequest {
 
 message ListRoomsResponse {
     Error error = 1;
-    repeated string rooms = 2;
+    repeated RoomMessage rooms = 2;
+}
+
+message RoomMessage {
+  string title = 1;
+  string desc =2;
 }
