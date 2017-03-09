@@ -1,14 +1,6 @@
 # GRPC Chat
 
-A chat based on gRPC, written in Kotlin.
-
-## Work
-
-### 1. build proto
-
-```bash
-./gradlew :proto:build
-```
+This fork project adapts for [grpc-android-kotlin](https://github.com/Jacksgong/grpc-android-kotlin) project, please go for there to read further.
 
 ## License
 
