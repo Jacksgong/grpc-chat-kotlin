@@ -2,7 +2,7 @@ package de.mkammerer.grpcchat.server
 
 object Codes {
     const val SUCCESS = 0
-    const val INVALID_TOKEN = 999
+    const val INVALID_TOKEN = 401
 }
 
 object LoginCodes {
