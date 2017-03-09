@@ -9,7 +9,7 @@ class RoomAlreadyExistsException(name: String) : Exception("Room '$name' already
 class RoomNotFoundException(name: String) : Exception("Room '$name' not found")
 
 interface RoomService {
-    fun create(user: User, name: String): Room
+    fun create(user: User, name: String, desc: String): Room
 
     fun exists(name: String): Boolean
 
@@ -38,11 +38,11 @@ object InMemoryRoomService : RoomService {
         return rooms.values.toSet()
     }
 
-    override fun create(user: User, name: String): Room {
+    override fun create(user: User, name: String, desc: String): Room {
         // whether the user has already created a room.
         if (exists(name)) throw RoomAlreadyExistsException(name)
 
-        val room = Room(name, null)
+        val room = Room(name, desc)
         rooms.put(room.name, room)
 
         join(user, room)

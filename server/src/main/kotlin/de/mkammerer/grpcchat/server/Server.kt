@@ -124,7 +124,7 @@ class Chat(
         } else {
             try {
                 // if user is valid, create room, and put the room to the room service.
-                roomService.create(user, request.name)
+                roomService.create(user, request.name, request.desc)
                 // create the response for successfully creating the room.
                 logger.info("create room successfully")
                 CreateRoomResponse.newBuilder().setCreated(true).build()

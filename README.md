@@ -7,8 +7,7 @@ A chat based on gRPC, written in Kotlin.
 ### 1. build proto
 
 ```bash
-cd protocol
-gradle build
+./gradlew :proto:build
 ```
 
 ## License

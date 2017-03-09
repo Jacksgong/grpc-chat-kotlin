@@ -55,6 +55,7 @@ message LoginOrRegisterResponse {
 message CreateRoomRequest {
     string token = 1;
     string name = 2;
+    string desc = 3;
 }
 
 message CreateRoomResponse {
