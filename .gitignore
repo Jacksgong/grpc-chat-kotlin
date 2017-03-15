@@ -5,3 +5,7 @@
 # Gradle
 build/
 .gradle/
+
+# Background
+.process_pid.txt
+running.log
