@@ -76,7 +76,7 @@ class Client(private val username: String, private val password: String) {
 
         if (response.error.code == Codes.SUCCESS) {
             logger.info("Rooms on server:")
-            response.roomsList.forEach { it -> logger.info(it.toString()) }
+            response.roomsList.forEach { it -> logger.info(it) }
         } else {
             logger.info("List rooms failed, error: {}", response.error)
         }

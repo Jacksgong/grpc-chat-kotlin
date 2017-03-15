@@ -3,6 +3,7 @@ package de.mkammerer.grpcchat.server
 import de.mkammerer.grpcchat.protocol.*
 import io.grpc.ServerBuilder
 import io.grpc.stub.StreamObserver
+import org.slf4j.LoggerFactory
 
 fun main(args: Array<String>) {
     // the entrance.
@@ -12,7 +13,7 @@ fun main(args: Array<String>) {
 
 object Server {
     private const val PORT = 5001
-    private val logger = SLogger.create(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     fun start() {
         // the token generator
@@ -28,7 +29,7 @@ object Server {
         Runtime.getRuntime().addShutdownHook(Thread({
             server.shutdown()
         }))
-        logger.info("Server running on port $PORT")
+        logger.info("Server running on port {}", PORT)
         server.awaitTermination()
     }
 }
@@ -45,7 +46,7 @@ class Chat(
 // just implement the operation of ChatGrpc which generate through protocol buffer and is handled by gRPC system.
 ) : ChatGrpc.ChatImplBase() {
     // the logger just used for debugging.
-    private val logger = SLogger.create(javaClass)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     /**
      * build an error response.
@@ -61,7 +62,7 @@ class Chat(
         if (!exist) {
             logger.info("${request.username} isn't exist, so register for it first")
             val user = userService.register(request.username, request.password)
-            logger.info("User ${user.username} registered")
+            logger.info("User {} registered", user.username)
             responseBuilder.performedRegister = true
         } else {
             responseBuilder.performedRegister = false
@@ -70,7 +71,7 @@ class Chat(
         val token = userService.login(request.username, request.password)
 
         val response = if (token != null) {
-            logger.info("User ${request.username} logged in. Access token is $token")
+            logger.info("User {} logged in. Access token is {}", request.username, token)
             responseBuilder.setLoggedIn(true).setToken(token.data).build()
         } else {
             responseBuilder.setLoggedIn(false).setError(buildError(LoginCodes.INVALID_CREDENTIALS, "Invalid credentials")).build()
@@ -85,7 +86,7 @@ class Chat(
         val token = userService.login(request.username, request.password)
         val response = if (token != null) {
             // login successfully
-            logger.info("User ${request.username} logged in. Access token is $token")
+            logger.info("User {} logged in. Access token is {}", request.username, token)
             LoginResponse.newBuilder().setLoggedIn(true).setToken(token.data).build()
         } else {
             LoginResponse.newBuilder().setLoggedIn(false).setError(buildError(LoginCodes.INVALID_CREDENTIALS, "Invalid credentials")).build()
@@ -99,7 +100,7 @@ class Chat(
     override fun register(request: RegisterRequest, responseObserver: StreamObserver<RegisterResponse>) {
         val response = try {
             val user = userService.register(request.username, request.password)
-            logger.info("User ${user.username} registered")
+            logger.info("User {} registered", user.username)
 
             // build the successfully register code.
             RegisterResponse.newBuilder().setRegistered(true).build()
