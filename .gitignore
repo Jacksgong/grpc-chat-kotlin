@@ -5,3 +5,6 @@
 # Gradle
 build/
 .gradle/
+
+# Log
+server/logs
